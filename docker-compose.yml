@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  fitness-web:
+    build: .
+    ports:
+      - "3000:80"
+    container_name: fitness-web
+    restart: unless-stopped 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, deleteDoc, updateDoc, getDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
 import "../index.css";
 
@@ -31,19 +31,43 @@ const SelectedWorkouts = () => {
   // Handle Delete Function
   const handleDelete = async (id) => {
     if (!id) {
+      console.error("Delete attempted with invalid ID");
       alert("⚠️ Invalid workout ID.");
       return;
     }
-    try {
-      const docRef = doc(firestore, "workouts", id);
-      console.log("Deleting document with ID:", id);
-      await deleteDoc(docRef);
 
-      setSavedWorkouts((prev) => prev.filter((workout) => workout.id !== id));
-      alert("✅ Workout removed successfully!");
+    // Confirm deletion
+    if (!window.confirm("Are you sure you want to delete this workout plan?")) {
+      return;
+    }
+
+    try {
+      console.log("Starting deletion process for workout ID:", id);
+      const docRef = doc(firestore, "workouts", id);
+      
+      // Verify document exists before deletion
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        console.error("Document does not exist:", id);
+        alert("⚠️ Workout plan not found.");
+        return;
+      }
+
+      // Delete the document
+      await deleteDoc(docRef);
+      console.log("Document successfully deleted:", id);
+
+      // Update local state
+      setSavedWorkouts((prev) => {
+        const updated = prev.filter((workout) => workout.id !== id);
+        console.log("Local state updated, remaining workouts:", updated.length);
+        return updated;
+      });
+
+      alert("✅ Workout plan removed successfully!");
     } catch (error) {
-      console.error("Error deleting workout:", error.message);
-      alert("⚠️ Failed to delete workout. Please try again.");
+      console.error("Error deleting workout:", error);
+      alert(`⚠️ Failed to delete workout plan: ${error.message}`);
     }
   };
 

@@ -39,12 +39,30 @@ const WorkoutList = () => {
       return;
     }
     try {
-      const docRef = await addDoc(collection(firestore, "workouts"), workout);
+      console.log("Attempting to save workout:", workout);
+      const workoutsCollection = collection(firestore, "workouts");
+      console.log("Collection reference created");
+      const docRef = await addDoc(workoutsCollection, workout);
+      console.log("Document saved successfully with ID:", docRef.id);
       setSavedWorkouts((prev) => [...prev, { id: docRef.id, ...workout }]);
       alert(`"${workout.name}" saved to your plans!`);
     } catch (error) {
-      console.error("Error saving workout: ", error);
-      alert("Failed to save the workout.");
+      console.error("Detailed error saving workout:", {
+        code: error.code,
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+      
+      if (error.code === 'permission-denied') {
+        alert("Permission denied. Please check your Firebase security rules.");
+      } else if (error.code === 'unavailable') {
+        alert("Firebase service is currently unavailable. Please try again later.");
+      } else if (error.code === 'invalid-argument') {
+        alert("Invalid data format. Please try again.");
+      } else {
+        alert(`Failed to save the workout: ${error.message}`);
+      }
     }
   };
 
